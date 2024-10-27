@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WealthNest</title>
+    <style>
+        /* General Styling */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+            background-image: url('./background.png');
+            background-size: cover;
+            background-position: center;
+        }
+        #budget-report, #goal-selection {
+            display: none;
+            width: 90%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .goal-option {
+            margin-bottom: 10px;
+        }
+        #budget-report {
+            display: none;
+            width: 90%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        #loading-message {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        #suggestions {
+            margin-top: 20px;
+            font-size: 1em;
+            color: #333;
+        }
+        #splash, #notification, #login-box, #age-income-box, #expense-tracker {
+            display: none;
+            width: 90%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        input[type="text"], input[type="password"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Title Page -->
+    <div id="splash">
+        <h1>WealthNest</h1>
+        <p>Grow Your Wealth, Secure Your Future.</p>
+    </div>
+
+    <!-- Notification Permission Request -->
+    <div id="notification">
+        <h2>Allow Notifications?</h2>
+        <p>Would you like to receive notifications from WealthNest?</p>
+        <div class="button-container">
+            <button onclick="allowNotifications()">Allow</button>
+            <button onclick="skipNotifications()">Skip</button>
+        </div>
+    </div>
+
+    <!-- Login Page -->
+    <div id="login-box">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button onclick="login()">Login</button>
+    </div>
+
+    <!-- Age and Income Input -->
+    <div id="age-income-box">
+        <h2>Enter Your Details</h2>
+        <input type="number" id="age" placeholder="Age" required>
+        <input type="number" id="income" placeholder="Annual Income" required>
+        <input type="number" id="deposits" placeholder="Bank Deposits" required oninput="showInterestRate()">
+        <div id="interest-rate-container" style="display: none;">
+            <input type="number" id="interest_rate" placeholder="Interest Rate">
+        </div>
+        <input type="number" id="shares" placeholder="Shares Worth">
+        <button onclick="submitDetails()">Submit</button>
+    </div>
+
+    <!-- Expense Tracker -->
+    <div id="expense-tracker">
+        <h2>Expense Tracker</h2>
+        <h3>Fixed Expenses</h3>
+        <input type="number" placeholder="Rent" id="rent" min="0">
+        <input type="number" placeholder="Education" id="education" min="0">
+        <input type="number" placeholder="Healthcare" id="healthcare" min="0">
+        <input type="number" placeholder="EMIs" id="emis" min="0">
+
+        <h3>Variable Expenses</h3>
+        <div id="variable-expense-list"></div>
+        <input type="text" id="new-variable-name" placeholder="Expense Name">
+        <input type="number" id="new-variable-amount" placeholder="Amount" min="0">
+        <button onclick="addVariableExpense()">Add Variable Expense</button>
+        <button onclick="addDayExpenses()">Add Day Expenses</button>
+        <button onclick="finalSubmit()">Final Submit</button>
+    </div>
+
+    <script>
+        // Initial display handling
+        setTimeout(() => {
+            document.getElementById('splash').style.display = 'none';
+            document.getElementById('notification').style.display = 'block';
+        }, 3000);
+
+        // Functions for splash, notification, login, and age/income submission
+        function allowNotifications() {
+            document.getElementById('notification').style.display = 'none';
+            document.getElementById('login-box').style.display = 'block';
+        }
+        function skipNotifications() {
+            document.getElementById('notification').style.display = 'none';
+            document.getElementById('login-box').style.display = 'block';
+        }
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            if (password === '123') {
+                document.getElementById('login-box').style.display = 'none';
+                document.getElementById('age-income-box').style.display = 'block';
+            } else {
+                alert('Incorrect password. Try again.');
+            }
+        }
+        function submitDetails() {
+            document.getElementById('age-income-box').style.display = 'none';
+            document.getElementById('expense-tracker').style.display = 'block';
+        }
+        function showInterestRate() {
+            const deposits = document.getElementById("deposits").value;
+            const interestRateContainer = document.getElementById("interest-rate-container");
+            interestRateContainer.style.display = deposits > 0 ? "block" : "none";
+        }
+
+        // Expense Tracker Functions
+        const variableExpenses = [];
+        function addVariableExpense() {
+            const name = document.getElementById("new-variable-name").value;
+            const amount = document.getElementById("new-variable-amount").value;
+            if (name && amount) {
+                variableExpenses.push({ name, amount });
+                document.getElementById("variable-expense-list").innerHTML += `<p>${name}: ₹${amount}</p>`;
+                document.getElementById("new-variable-name").value = "";
+                document.getElementById("new-variable-amount").value = "";
+            } else {
+                alert("Please enter both expense name and amount.");
+            }
+        }
+        function addDayExpenses() {
+            alert("Daily expenses recorded!");
+        }
+        function finalSubmit() {
+        alert("All expenses submitted successfully!");
+        // Add any additional actions here if needed for the final submit
+    }
+    </script>
+    <!-- Budget Report -->
+    <div id="budget-report">
+        <h2>Budget Report</h2>
+        <div id="loading-message">Budget report is forming, please wait...</div>
+        <canvas id="expenseChart" width="400" height="200"></canvas>
+        <div id="suggestions"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Initial display handling, notification, login, age/income submission, etc.
+        // Add your existing functions for splash, notifications, login, and age/income here
+
+        function finalSubmit() {
+            document.getElementById('expense-tracker').style.display = 'none';
+            document.getElementById('loading-message').style.display = 'block';
+            document.getElementById('budget-report').style.display = 'block';
+
+            // Delay to simulate loading
+            setTimeout(() => {
+                document.getElementById('loading-message').style.display = 'none';
+                generateReport();
+            }, 2000);
+        }
+
+        function generateReport() {
+            const rent = parseFloat(document.getElementById("rent").value) || 0;
+            const education = parseFloat(document.getElementById("education").value) || 0;
+            const healthcare = parseFloat(document.getElementById("healthcare").value) || 0;
+            const emis = parseFloat(document.getElementById("emis").value) || 0;
+            const income = parseFloat(document.getElementById("income").value) || 0;
+
+            // Total fixed and variable expenses
+            const fixedExpenses = rent + education + healthcare + emis;
+            const variableExpenses = variableExpenses.reduce((acc, exp) => acc + parseFloat(exp.amount), 0);
+            const totalExpenses = fixedExpenses + variableExpenses;
+            const savings = income - totalExpenses;
+            
+            const expenseData = {
+                labels: ['Fixed Expenses', 'Variable Expenses', 'Savings'],
+                datasets: [{
+                    label: 'Financial Position',
+                    data: [fixedExpenses, variableExpenses, savings],
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                }]
+            };
+
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: expenseData,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+
+            // Suggestions based on analysis
+            let suggestions = `<h3>Suggestions</h3>`;
+            if (savings < 0) {
+                suggestions += `<p>Your expenses are higher than your income. Consider reducing discretionary spending or optimizing fixed costs.</p>`;
+            } else {
+                suggestions += `<p>Your financial balance is positive. Keep track of your expenses to maintain a stable budget.</p>`;
+            }
+            document.getElementById('suggestions').innerHTML = suggestions;
+        }
+    </script>
+
+<script>
+    function finalSubmit() {
+        alert("All expenses submitted successfully!");
+        document.getElementById("expense-tracker").style.display = "none";
+        document.getElementById("budget-report").style.display = "block";
+
+        // Display a temporary loading message
+        document.getElementById("loading-message").style.display = "block";
+        
+        // Simulate report loading delay
+        setTimeout(generateBudgetReport, 2000); // 2-second delay for demonstration
+    }
+
+    function generateBudgetReport() {
+        document.getElementById("loading-message").style.display = "none";
+
+        const rent = parseFloat(document.getElementById("rent").value) || 0;
+        const education = parseFloat(document.getElementById("education").value) || 0;
+        const healthcare = parseFloat(document.getElementById("healthcare").value) || 0;
+        const emis = parseFloat(document.getElementById("emis").value) || 0;
+        const income = parseFloat(document.getElementById("income").value) || 0;
+
+        const variableTotal = variableExpenses.reduce((total, expense) => total + parseFloat(expense.amount), 0);
+        const totalExpenses = rent + education + healthcare + emis + variableTotal;
+        const savings = income - totalExpenses;
+        const loan = emis; // Assuming EMIs represent loans
+
+        // Display the chart
+        displayChart(totalExpenses, savings, loan);
+
+        // Provide suggestions based on financial analysis
+        provideSuggestions(income, totalExpenses, savings);
+    }
+
+    function displayChart(expenses, savings, loan) {
+        const ctx = document.getElementById("expenseChart").getContext("2d");
+        new Chart(ctx, {
+            type: "pie",
+            data: {
+                labels: ["Expenses", "Savings", "Loan"],
+                datasets: [{
+                    data: [expenses, savings, loan],
+                    backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"],
+                }],
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                }
+            }
+        });
+    }
+
+    function provideSuggestions(income, totalExpenses, savings) {
+        const suggestionsDiv = document.getElementById("suggestions");
+        if (totalExpenses > income) {
+            suggestionsDiv.innerHTML = `
+                <p>Your expenses exceed your income. Consider reducing discretionary spending in variable expenses or limiting fixed costs if possible.</p>
+            `;
+        } else if (savings < income * 0.2) {
+            suggestionsDiv.innerHTML = `
+                <p>Your savings are low compared to your income. Aim to save at least 20% of your income for better financial stability.</p>
+            `;
+        } else {
+            suggestionsDiv.innerHTML = `
+                <p>Your finances are in good shape. Continue saving and managing your expenses wisely!</p>
+            `;
+        }
+    }
+</script>
+<script>
+    // Budget calculation and display function
+    function finalSubmit() {
+        document.getElementById('expense-tracker').style.display = 'none';
+        document.getElementById('budget-report').style.display = 'block';
+        document.getElementById('loading-message').style.display = 'block';
+
+        setTimeout(() => {
+            document.getElementById('loading-message').style.display = 'none';
+            displayBudgetReport();
+        }, 2000); // Simulating a short delay
+    }
+
+    function displayBudgetReport() {
+        const rent = Number(document.getElementById("rent").value) || 0;
+        const education = Number(document.getElementById("education").value) || 0;
+        const healthcare = Number(document.getElementById("healthcare").value) || 0;
+        const emis = Number(document.getElementById("emis").value) || 0;
+        const totalFixedExpenses = rent + education + healthcare + emis;
+
+        const totalVariableExpenses = variableExpenses.reduce((acc, curr) => acc + Number(curr.amount), 0);
+        const totalExpenses = totalFixedExpenses + totalVariableExpenses;
+        const income = Number(document.getElementById("income").value) || 0;
+        const savings = income - totalExpenses;
+
+        const ctx = document.getElementById("expenseChart").getContext("2d");
+        new Chart(ctx, {
+            type: "doughnut",
+            data: {
+                labels: ["Fixed Expenses", "Variable Expenses", "Savings"],
+                datasets: [{
+                    data: [totalFixedExpenses, totalVariableExpenses, savings],
+                    backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"],
+                }],
+            },
+        });
+
+        document.getElementById("suggestions").innerHTML = 
+            savings < 0 ? "<p>Warning: Your expenses exceed your income. Consider reducing variable expenses.</p>" :
+            "<p>Your financial status looks balanced. Keep track of your expenses to maintain good savings.</p>";
+
+        recommendInvestments(savings);
+    }
+
+    // Investment options function based on savings
+    function recommendInvestments(savings) {
+        const investmentList = document.getElementById("investment-list");
+        investmentList.innerHTML = ""; // Clear previous recommendations
+
+        if (savings <= 0) {
+            investmentList.innerHTML = "<li>Your current expenses exceed your income. Consider cutting down on discretionary spending to save for investments.</li>";
+        } else {
+            if (savings <= 5000) {
+                investmentList.innerHTML += "<li>Consider a high-interest savings account for easy access and security.</li>";
+            } else if (savings <= 20000) {
+                investmentList.innerHTML += "<li>Consider a combination of fixed deposits and low-risk mutual funds for steady growth.</li>";
+            } else {
+                investmentList.innerHTML += "<li>With sufficient savings, explore a diversified portfolio including mutual funds, stocks, and bonds.</li>";
+            }
+        }
+    }
+</script>
+</body>
+</html>
